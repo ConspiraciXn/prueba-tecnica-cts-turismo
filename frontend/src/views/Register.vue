@@ -67,10 +67,10 @@
 				<!-- Rut -->
 				<div>
 					<label for="rut" class="mb-1 block text-sm font-medium text-slate-700">RUT</label>
-					<input id="rut" v-model.trim="form.rut" type="text"
+					<input id="rut" v-model="form.rut" type="text"
 						class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
-						:class="{ 'border-rose-400 focus:ring-rose-300': fieldErrors('rut') }" placeholder="12345678-9"
-						required />
+						:class="{ 'border-rose-400 focus:ring-rose-300': fieldErrors('rut') }" placeholder="12.345.678-9"
+						required @input="onRutInput" />
 					<p v-if="fieldErrors('rut')" class="mt-2 text-sm text-rose-600">
 						{{ fieldErrors('rut')?.join(' ') }}
 					</p>
@@ -79,10 +79,10 @@
 				<!-- Phone -->
 				<div>
 					<label for="phone" class="mb-1 block text-sm font-medium text-slate-700">Teléfono</label>
-					<input id="phone" v-model.trim="form.phone" type="tel"
+					<input id="phone" v-model="form.phone" type="tel"
 						class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
 						:class="{ 'border-rose-400 focus:ring-rose-300': fieldErrors('phone') }"
-						placeholder="+56 9 1234 5678" required />
+						placeholder="+56 9 1234 5678" required @focus="ensurePhonePrefix" @input="onPhoneInput" />
 					<p v-if="fieldErrors('phone')" class="mt-2 text-sm text-rose-600">
 						{{ fieldErrors('phone')?.join(' ') }}
 					</p>
@@ -124,12 +124,72 @@
 import { reactive, ref } from 'vue'
 import { apiRequest } from '@/utils/apiClient'
 
+const formatRutValue = (value) => {
+
+	const clean = value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9)
+
+	if (!clean) {
+		return ''
+	}
+
+	if (clean.length === 1) {
+		return clean
+	}
+
+	const body = clean.slice(0, -1)
+	const dv = clean.slice(-1)
+
+	const reversed = body.split('').reverse()
+	const groups = []
+
+	for (let i = 0; i < reversed.length; i += 3) {
+		groups.push(reversed.slice(i, i + 3).reverse().join(''))
+	}
+
+	const formattedBody = groups.reverse().join('.')
+
+	return `${formattedBody}-${dv}`
+}
+
+const formatPhoneValue = (value) => {
+
+	let digits = value.replace(/\D/g, '')
+
+	if (digits.startsWith('569')) {
+		digits = digits.slice(3)
+
+	} else if (digits.startsWith('56')) {
+		digits = digits.slice(2)
+
+	} else if (digits.startsWith('9')) {
+		digits = digits.slice(1)
+
+	}
+
+	digits = digits.slice(0, 8)
+
+	const firstBlock = digits.slice(0, 4)
+	const secondBlock = digits.slice(4)
+
+	let formatted = '+56 9'
+
+	if (firstBlock) {
+		formatted += ` ${firstBlock}`
+	}
+
+	if (secondBlock) {
+		formatted += ` ${secondBlock}`
+	}
+
+	return formatted
+}
+
 const form = reactive({
 	firstName: '',
 	lastName: '',
 	email: '',
 	rut: '',
-	phone: '',
+	phone: formatPhoneValue(''),
 	address: '',
 })
 
@@ -148,7 +208,22 @@ const resetErrors = () => {
 
 const fieldErrors = (field) => errors[field] || null
 
+const onRutInput = (event) => {
+	form.rut = formatRutValue(event.target.value)
+}
+
+const ensurePhonePrefix = () => {
+	if (!form.phone.startsWith('+56 9')) {
+		form.phone = formatPhoneValue(form.phone)
+	}
+}
+
+const onPhoneInput = (event) => {
+	form.phone = formatPhoneValue(event.target.value)
+}
+
 const handleSubmit = async () => {
+
 	resetErrors()
 	isSubmitting.value = true
 
@@ -172,9 +247,11 @@ const handleSubmit = async () => {
 		form.lastName = ''
 		form.email = ''
 		form.rut = ''
-		form.phone = ''
+		form.phone = formatPhoneValue('')
 		form.address = ''
+
 	} catch (error) {
+
 		generalError.value = error?.data?.message || error.message || 'No pudimos completar el registro.'
 
 		if (error?.data?.errors && typeof error.data.errors === 'object') {
@@ -182,8 +259,10 @@ const handleSubmit = async () => {
 				errors[field] = Array.isArray(details) ? details : [String(details)]
 			})
 		}
+		
 	} finally {
 		isSubmitting.value = false
 	}
 }
+
 </script>
