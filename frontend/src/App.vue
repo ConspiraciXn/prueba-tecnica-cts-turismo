@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <Header />
+	<div class="min-h-screen flex flex-col">
+		<Header />
 
-    <main class="flex-1">
-      <div class="max-w-7xl mx-auto py-10">
-        <router-view />
-      </div>
-    </main>
+		<main class="flex-1">
+			<div class="max-w-7xl mx-auto py-10">
+				<router-view />
+			</div>
+		</main>
 
-    <Footer />
-  </div>
+		<Footer />
+	</div>
 </template>
 
 <script setup>
