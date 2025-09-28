@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Verifica tu correo</title>
+	<style>
+		body {
+			font-family: 'Helvetica Neue', Arial, sans-serif;
+			background-color: #f6f7fb;
+			color: #1f2933;
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			max-width: 600px;
+			margin: 0 auto;
+			background-color: #ffffff;
+			border-radius: 16px;
+			padding: 32px;
+			box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+		}
+
+		.logo {
+			text-align: center;
+			margin-bottom: 24px;
+			color: #db2777;
+			font-weight: 600;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+		}
+
+		.button {
+			display: inline-block;
+			padding: 14px 28px;
+			background: linear-gradient(90deg, #db2777, #7c3aed);
+			color: #ffffff !important;
+			text-decoration: none;
+			border-radius: 9999px;
+			font-weight: 600;
+			margin: 24px 0;
+		}
+
+		.footer {
+			margin-top: 32px;
+			font-size: 12px;
+			color: #64748b;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="logo">CTS Turismo</div>
+		<p>Hola {{ user.first_name|default:"" }} {{ user.last_name|default:"" }},</p>
+		<p>
+			¡Gracias por inscribirte en el sorteo de San Valentín! Para confirmar tu participación, necesitamos que
+			verifiques tu correo haciendo clic en el
+			siguiente botón:
+		</p>
+		<p style="text-align: center">
+			<a class="button" href="{{ verification_link }}" target="_blank" rel="noopener">Verificar mi correo</a>
+		</p>
+		<p>
+			Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+			<a href="{{ verification_link }}" target="_blank" rel="noopener">{{ verification_link }}</a>
+		</p>
+		<p>
+			Una vez verificado tu correo, podrás crear tu contraseña y completar el proceso para participar. ¡Te
+			deseamos mucha suerte!
+		</p>
+		<p>Equipo CTS Turismo</p>
+		<div class="footer">Este mensaje fue enviado automáticamente. Por favor, no respondas a este correo.</div>
+	</div>
+</body>
+
+</html>
