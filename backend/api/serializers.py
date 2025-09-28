@@ -1,10 +1,12 @@
 import re
-
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
-
-from .models import ParticipantProfile
+from api.models import ParticipantProfile
 
 User = get_user_model()
 
@@ -27,7 +29,6 @@ def format_rut(value):
     chunks = [reversed_body[i : i + 3][::-1] for i in range(0, len(reversed_body), 3)]
     formatted_body = '.'.join(reversed(chunks))
     return f'{formatted_body}-{dv}'
-
 
 def format_phone(value):
     digits = re.sub(r'\D', '', value)
@@ -105,5 +106,61 @@ class ParticipantRegistrationSerializer(serializers.Serializer):
             profile.phone = validated_data['phone']
             profile.address = validated_data['address']
             profile.save(update_fields=['rut', 'phone', 'address'])
+
+        return user
+
+class EmailVerificationBaseSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+
+    default_error_messages = {
+        'invalid_link': 'El enlace de verificación no es válido o ha expirado.',
+        'password_mismatch': 'Las contraseñas no coinciden.',
+    }
+
+    def validate(self, attrs):
+        uid = attrs.get('uid')
+        token = attrs.get('token')
+
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError({'uid': self.error_messages['invalid_link']})
+
+        if not default_token_generator.check_token(user, token):
+            raise serializers.ValidationError({'token': self.error_messages['invalid_link']})
+
+        attrs['user'] = user
+        return attrs
+
+class EmailVerificationLinkSerializer(EmailVerificationBaseSerializer):
+    pass
+
+class EmailVerificationSerializer(EmailVerificationBaseSerializer):
+    password = serializers.CharField()
+    confirm_password = serializers.CharField()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        password = attrs.get('password')
+        confirm_password = attrs.get('confirm_password')
+
+        if password != confirm_password:
+            raise serializers.ValidationError({'confirm_password': self.error_messages['password_mismatch']})
+
+        validate_password(password, attrs['user'])
+
+        return attrs
+
+    def save(self):
+        user = self.validated_data['user']
+        password = self.validated_data['password']
+
+        user.set_password(password)
+        user.is_active = True
+        user.save(update_fields=['password', 'is_active'])
 
         return user
