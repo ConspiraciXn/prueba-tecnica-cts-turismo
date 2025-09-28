@@ -1,0 +1,3 @@
+<template>
+    dashboard principal
+</template>
