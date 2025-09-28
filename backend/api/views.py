@@ -23,7 +23,7 @@ def register_participant(request):
 
         return success_response(
             data=data,
-            message='¡Gracias por registrarte! Revisa tu correo para verificar tu cuenta.',
+            message='Revisa tu correo para verificar tu cuenta y completar tu registro.',
             status_code=status.HTTP_201_CREATED,
         )
 
