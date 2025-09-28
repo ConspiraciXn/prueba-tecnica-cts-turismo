@@ -4,7 +4,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.decorators import api_view
-from api.serializers import EmailVerificationLinkSerializer, EmailVerificationSerializer, ParticipantRegistrationSerializer
+from rest_framework.authtoken.models import Token
+from api.serializers import AdminLoginSerializer, EmailVerificationLinkSerializer, EmailVerificationSerializer, ParticipantRegistrationSerializer
 from api.utils.responses import error_response, success_response
 from api.utils.email import send_verification_email
 
@@ -35,7 +36,7 @@ def register_participant(request):
 
         return success_response(
             data=data,
-            message='Revisa tu correo para verificar tu cuenta y completar tu registro.',
+            message='¡Gracias por registrarte! Revisa tu correo para verificar tu cuenta.',
             status_code=status.HTTP_201_CREATED,
         )
 
@@ -109,3 +110,32 @@ def verify_participant_email(request):
 
 
 # Admins
+@api_view(['POST'])
+def admin_login(request):
+
+    serializer = AdminLoginSerializer(data=request.data)
+
+    if serializer.is_valid():
+
+        user = serializer.validated_data['user']
+        token, _ = Token.objects.get_or_create(user=user)
+
+        data = {
+            'token': token.key,
+            'id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+        }
+
+        return success_response(
+            data=data,
+            message='Inicio de sesión exitoso.',
+        )
+
+    return error_response(
+        message='No pudimos iniciar sesión con las credenciales proporcionadas.',
+        errors=serializer.errors,
+        status_code=status.HTTP_400_BAD_REQUEST,
+    )
+

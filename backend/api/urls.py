@@ -9,4 +9,6 @@ urlpatterns = [
     path('participants/verify-email/', views.verify_participant_email, name='api-participant-verify-email'),
 
     # Admin
+    path('admin/login/', views.admin_login, name='api-admin-login'),
+    
 ]

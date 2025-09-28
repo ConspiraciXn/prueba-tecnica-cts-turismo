@@ -164,3 +164,30 @@ class EmailVerificationSerializer(EmailVerificationBaseSerializer):
         user.save(update_fields=['password', 'is_active'])
 
         return user
+
+class AdminLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+    default_error_messages = {
+        'invalid_credentials': 'Credenciales inválidas.',
+        'not_authorized': 'No tienes permisos para acceder al panel de administración.',
+    }
+
+    def validate(self, attrs):
+        email = attrs.get('email', '').strip().lower()
+        password = attrs.get('password')
+
+        user = User.objects.filter(email__iexact=email).first()
+
+        if not user or not user.check_password(password):
+            raise serializers.ValidationError({'email': self.error_messages['invalid_credentials']})
+
+        if not user.is_active:
+            raise serializers.ValidationError({'email': 'La cuenta está desactivada.'})
+
+        if not user.is_superuser:
+            raise serializers.ValidationError({'email': self.error_messages['not_authorized']})
+
+        attrs['user'] = user
+        return attrs
