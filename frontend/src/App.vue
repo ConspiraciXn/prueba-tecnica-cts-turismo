@@ -2,7 +2,7 @@
 	<div class="min-h-screen flex flex-col">
 		<Header />
 
-		<main class="flex-1">
+		<main class="flex-1 bg-gray-100">
 			<div class="max-w-7xl mx-auto py-10">
 				<router-view />
 			</div>
