@@ -1,10 +1,20 @@
 <template>
+  <div class="min-h-screen flex flex-col">
+    <Header />
 
-	<router-view></router-view>
+    <main class="flex-1">
+      <div class="max-w-7xl mx-auto py-10">
+        <router-view />
+      </div>
+    </main>
 
+    <Footer />
+  </div>
 </template>
 
 <script setup>
+import Header from '@/components/Header.vue'
+import Footer from '@/components/Footer.vue'
 </script>
 
 <style scoped></style>
