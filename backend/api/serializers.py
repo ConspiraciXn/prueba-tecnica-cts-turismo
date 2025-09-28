@@ -99,7 +99,8 @@ class ParticipantRegistrationSerializer(serializers.Serializer):
                 last_name=validated_data['last_name'].strip(),
             )
             user.set_unusable_password()
-            user.save(update_fields=['password'])
+            user.is_active = False
+            user.save(update_fields=['password', 'is_active'])
 
             profile, _ = ParticipantProfile.objects.get_or_create(user=user)
             profile.rut = validated_data['rut']
