@@ -163,7 +163,7 @@ def admin_participant_list(request):
     search = request.query_params.get('search', '').strip()
     verified = request.query_params.get('verified', '').lower()
 
-    participants = ParticipantProfile.objects.select_related('user')
+    participants = ParticipantProfile.objects.select_related('user').filter(user__is_superuser=False)
 
     if search:
         participants = participants.filter(
