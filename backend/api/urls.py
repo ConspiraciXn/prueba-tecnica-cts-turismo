@@ -11,4 +11,5 @@ urlpatterns = [
     # Admin
     path('admin/login/', views.admin_login, name='api-admin-login'),
     path('admin/participants/', views.admin_participant_list, name='api-admin-participant-list'),
+    path('admin/draw-winner/', views.admin_draw_winner, name='api-admin-draw-winner'),
 ]

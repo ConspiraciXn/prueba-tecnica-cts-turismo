@@ -1,3 +1,5 @@
+import random
+
 from rest_framework import status
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
@@ -9,7 +11,7 @@ from rest_framework.authtoken.models import Token
 from api.models import ParticipantProfile
 from api.serializers import AdminLoginSerializer, EmailVerificationLinkSerializer, EmailVerificationSerializer, ParticipantRegistrationSerializer
 from api.utils.responses import error_response, success_response
-from api.utils.email import send_verification_email
+from api.utils.email import send_verification_email, send_winner_notification_email
 
 
 # Participants
@@ -196,4 +198,53 @@ def admin_participant_list(request):
             'count': len(results),
         },
         message='Listado de participantes recuperado correctamente.',
+    )
+
+@api_view(['POST'])
+def admin_draw_winner(request):
+
+    admin_user = request.user
+
+    if not admin_user.is_authenticated:
+        return error_response(
+            message='No autorizado.',
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    if not admin_user.is_superuser:
+        return error_response(
+            message='No tienes permisos para realizar el sorteo.',
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    eligible_profiles = ParticipantProfile.objects.select_related('user').filter(
+        user__is_active=True,
+        user__is_superuser=False,
+    )
+
+    profiles_list = list(eligible_profiles)
+
+    if not profiles_list:
+        return error_response(
+            message='No hay participantes verificados disponibles para el sorteo.',
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    winner_profile = random.choice(profiles_list)
+    winner_user = winner_profile.user
+
+    email_sent = send_winner_notification_email(winner_user)
+
+    data = {
+        'id': winner_user.id,
+        'first_name': winner_user.first_name,
+        'last_name': winner_user.last_name,
+        'email': winner_user.email,
+        'rut': winner_profile.rut,
+        'email_sent': email_sent,
+    }
+
+    return success_response(
+        data=data,
+        message='Ganador seleccionado correctamente.',
     )

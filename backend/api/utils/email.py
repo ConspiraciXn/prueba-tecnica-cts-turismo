@@ -62,3 +62,10 @@ def send_verification_email(user, verification_link):
         'verification_link': verification_link,
     }
     return send_email(subject, user.email, 'emails/verification_email.html', context)
+
+def send_winner_notification_email(user):
+    subject = '¡Felicitaciones! Ganaste el sorteo de San Valentín'
+    context = {
+        'user': user,
+    }
+    return send_email(subject, user.email, 'emails/winner_notification.html', context)
