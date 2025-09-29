@@ -10,8 +10,8 @@ from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from api.models import ParticipantProfile
 from api.serializers import AdminLoginSerializer, EmailVerificationLinkSerializer, EmailVerificationSerializer, ParticipantRegistrationSerializer
+from api.tasks import send_verification_email_task, send_winner_notification_email_task
 from api.utils.responses import error_response, success_response
-from api.utils.email import send_verification_email, send_winner_notification_email
 
 
 # Participants
@@ -24,11 +24,11 @@ def register_participant(request):
         
         user = serializer.save()
 
-        # Generate verification link and send email
+        # Generate verification link and trigger async email
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         verification_link = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/email-verification?uid={uidb64}&token={token}"
-        send_verification_email(user, verification_link)
+        send_verification_email_task.delay(user.id, verification_link)
 
         data = {
             'id': user.id,
@@ -233,7 +233,7 @@ def admin_draw_winner(request):
     winner_profile = random.choice(profiles_list)
     winner_user = winner_profile.user
 
-    email_sent = send_winner_notification_email(winner_user)
+    send_winner_notification_email_task.delay(winner_user.id)
 
     data = {
         'id': winner_user.id,
@@ -241,7 +241,7 @@ def admin_draw_winner(request):
         'last_name': winner_user.last_name,
         'email': winner_user.email,
         'rut': winner_profile.rut,
-        'email_sent': email_sent,
+        'email_sent': True,
     }
 
     return success_response(
